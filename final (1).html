@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4º GUERRA CALCULATOR - Standalone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(240 3.7% 15.9%)",
+                        background: "hsl(240 10% 3.9%)",
+                        foreground: "hsl(0 0% 98%)",
+                        primary: {
+                            DEFAULT: "hsl(142.1 70.6% 45.3%)",
+                            foreground: "hsl(144.9 58.7% 10.8%)",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(240 3.7% 15.9%)",
+                            foreground: "hsl(240 5% 64.9%)",
+                        },
+                        card: {
+                            DEFAULT: "hsl(240 10% 3.9%)",
+                            foreground: "hsl(0 0% 98%)",
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { 
+            background-color: hsl(240 10% 3.9%); 
+            color: hsl(0 0% 98%); 
+            font-family: 'Inter', sans-serif; 
+        }
+        .hover-elevate { transition: transform 0.2s, box-shadow 0.2s; }
+        .hover-elevate:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(34, 197, 94, 0.3); }
+        input[type="number"] {
+            background: hsl(240 3.7% 10%);
+            border: 1px solid hsl(240 3.7% 15.9%);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 6px;
+            width: 100%;
+        }
+        input[type="checkbox"] {
+            accent-color: hsl(142.1 70.6% 45.3%);
+            width: 1.1rem;
+            height: 1.1rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: hsl(240 10% 8%);
+            border: 1px solid hsl(240 3.7% 15.9%);
+            padding: 1.5rem;
+            border-radius: 12px;
+            max-width: 90%;
+            width: 450px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+    <div class="max-w-4xl mx-auto space-y-8">
+        <header class="flex justify-between items-center border-b border-zinc-800 pb-6 sticky top-0 bg-background/80 backdrop-blur-md z-50">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">4º GUERRA <span class="text-primary">CALCULATOR</span></h1>
+                <p class="text-xs text-muted-foreground uppercase font-mono">Offline Version</p>
+            </div>
+            <div id="total-points" class="text-4xl font-black text-primary drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">0 PTS</div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <section class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-4 hover-elevate">
+                <h2 class="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Tempo e Geral
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 text-zinc-400">Horas Estudadas (Normais sem bônus)</label>
+                        <input type="number" id="hours" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5 text-zinc-400">Call STREAM (YPT/Disc)</label>
+                            <input type="number" id="streamHours" value="0" min="0" step="0.1" oninput="calc()">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1.5 text-zinc-400">Call CAM (YPT/Disc)</label>
+                            <input type="number" id="camHours" value="0" min="0" step="0.1" oninput="calc()">
+                        </div>
+                    </div>
+                    <div id="total-hours-display" class="bg-zinc-800/20 p-3 rounded-lg border border-zinc-700/30 text-center">
+                        <span class="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Somatório Total de Horas</span>
+                        <div class="text-lg font-bold text-primary" id="total-hours-sum">0.0h</div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 text-zinc-400">Horas de Ouro (00h-06h/FDS)</label>
+                        <input type="number" id="madrugada" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1.5 text-zinc-400">Páginas Lidas</label>
+                        <input type="number" id="pages" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div class="flex items-center gap-3 pt-2 bg-zinc-800/30 p-3 rounded-lg">
+                        <input type="checkbox" id="noSchool" onchange="calc()">
+                        <label class="text-sm font-medium cursor-pointer" for="noSchool">Sem Aula / Feriado (+50pts)</label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-4 hover-elevate">
+                <h2 class="text-sm font-bold text-primary uppercase tracking-widest flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Redações</span>
+                    <button onclick="showHelp('essay')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-1 rounded text-zinc-400">AJUDA</button>
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 text-zinc-500 uppercase">Nível 1 (30pts)</label>
+                        <input type="number" id="essay1" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 text-zinc-500 uppercase">Nível 2 (40pts)</label>
+                        <input type="number" id="essay2" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 text-zinc-500 uppercase">Nível 3 (50pts)</label>
+                        <input type="number" id="essay3" value="0" min="0" oninput="calc()">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1 text-zinc-500 uppercase">Nível 4 (60pts)</label>
+                        <input type="number" id="essay4" value="0" min="0" oninput="calc()">
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-6 hover-elevate">
+            <h2 class="text-sm font-bold text-primary uppercase tracking-widest flex items-center justify-between gap-2">
+                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Questões por Nível (Total)</span>
+                <div class="flex gap-2">
+                    <button onclick="showHelp('mat')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-1 rounded text-zinc-400">MAT/FIS/QUI</button>
+                    <button onclick="showHelp('hum')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-1 rounded text-zinc-400">HUMANAS</button>
+                    <button onclick="showHelp('lin')" class="text-[10px] bg-zinc-800 hover:bg-zinc-700 px-2 py-1 rounded text-zinc-400">PORT/ING</button>
+                </div>
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-black/20 p-3 rounded-lg border border-zinc-800/50">
+                    <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">N1 (+1 pt/q)</label>
+                    <input type="number" id="q1" value="0" min="0" oninput="calc()">
+                </div>
+                <div class="bg-black/20 p-3 rounded-lg border border-zinc-800/50">
+                    <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">N2 (+3 pts/q)</label>
+                    <input type="number" id="q2" value="0" min="0" oninput="calc()">
+                </div>
+                <div class="bg-black/20 p-3 rounded-lg border border-zinc-800/50">
+                    <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">N3 (+6 pts/q)</label>
+                    <input type="number" id="q3" value="0" min="0" oninput="calc()">
+                </div>
+                <div class="bg-black/20 p-3 rounded-lg border border-zinc-800/50">
+                    <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">N4 (+10 pts/q)</label>
+                    <input type="number" id="q4" value="0" min="0" oninput="calc()">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-6 hover-elevate">
+            <h2 class="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Eventos e Missões
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">Kahoot (Posição)</label>
+                        <select id="kahootPos" onchange="calc()" class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-xs text-white">
+                            <option value="0">Não participou</option>
+                            <option value="250">Abaixo de Top 5 (250)</option>
+                            <option value="500">Top 5 (500)</option>
+                            <option value="1000">Top 4 (1000)</option>
+                            <option value="1500">Top 3 (1500)</option>
+                            <option value="2000">Top 2 (2000)</option>
+                            <option value="3500">Top 1 (3500)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold mb-1.5 text-zinc-500 uppercase">Pontos por Missões</label>
+                        <input type="number" id="missionPoints" value="0" min="0" oninput="calc()">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 bg-zinc-800/20 p-3 rounded-md border border-zinc-700/50">
+                        <input type="checkbox" id="coletiva" onchange="calc()">
+                        <label class="text-xs font-bold uppercase cursor-pointer">Lista Coletiva Opcional</label>
+                        <input type="number" id="coletivaPoints" value="0" min="0" class="!w-20 ml-auto" oninput="calc()" placeholder="PTS">
+                    </div>
+                    <div class="text-[10px] text-zinc-500 italic">
+                        * Listas coletivas e missões valem pontos extras definidos pelo time/protocolo.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 space-y-6 hover-elevate">
+            <h2 class="text-sm font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Bônus e Simulados
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center gap-3 bg-zinc-800/20 p-2 rounded-md"><input type="checkbox" id="list1" onchange="calc()"><label class="text-xs font-semibold">Lista 1 (+30)</label></div>
+                    <div class="flex items-center gap-3 bg-zinc-800/20 p-2 rounded-md"><input type="checkbox" id="list2" onchange="calc()"><label class="text-xs font-semibold">Lista 2 (+50)</label></div>
+                    <div class="flex items-center gap-3 bg-zinc-800/20 p-2 rounded-md"><input type="checkbox" id="list3" onchange="calc()"><label class="text-xs font-semibold">Lista 3 (+70)</label></div>
+                    <div class="flex items-center gap-3 bg-zinc-800/20 p-2 rounded-md"><input type="checkbox" id="list4" onchange="calc()"><label class="text-xs font-semibold">Lista 4 (+100)</label></div>
+                </div>
+                <div class="space-y-3 bg-primary/5 border border-primary/20 p-4 rounded-xl">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-bold">Simulado (+200pts)</label>
+                        <input type="checkbox" id="simulado" onchange="calc()" class="w-5 h-5">
+                    </div>
+                    <select id="simuladoAcc" onchange="calc()" class="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 text-xs text-white">
+                        <option value="none">Precisão < 70%</option>
+                        <option value="70">Precisão > 70% (+180pts)</option>
+                        <option value="90">Precisão > 90% (+250pts)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <div class="pt-4">
+            <button onclick="copyReport()" class="w-full bg-primary text-primary-foreground font-black py-4 rounded-xl hover:scale-[1.01] transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
+                COPIAR RELATÓRIO
+            </button>
+        </div>
+        
+        <div class="space-y-2">
+            <span class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Preview do Relatório</span>
+            <pre id="report" class="bg-zinc-950 p-6 rounded-xl border border-zinc-800 text-[13px] font-mono whitespace-pre-wrap leading-relaxed"></pre>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal" onclick="closeHelp()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-3 mb-4">
+                <h3 id="modalTitle" class="text-sm font-bold text-primary uppercase tracking-widest">Níveis</h3>
+                <button onclick="closeHelp()" class="text-zinc-500 hover:text-white">&times;</button>
+            </div>
+            <div id="modalBody" class="space-y-4 text-xs leading-relaxed"></div>
+        </div>
+    </div>
+
+    <script>
+        const helpData = {
+            mat: {
+                title: "Matemática, Física e Química",
+                levels: [
+                    "Nível 1: ENEM, Vest. Civil; CFN; ESA; EEAr; e, EAM",
+                    "Nível 2: EsPCEx, FUVEST 1 fase, EPCAr",
+                    "Nível 3: EFOMM; AFA; CN, EN, FUVEST 2 fase",
+                    "Nível 4: ITA; IME; e, olimpíadas"
+                ]
+            },
+            hum: {
+                title: "História, Geo, Bio e Humanas",
+                levels: [
+                    "Nível 1: questões de fixação",
+                    "Nível 2: Vest. Civil; e, ESA",
+                    "Nível 3: CN; Olimpíadas; Fuvest 1º Fase; OBB 2º Fase; e, Unicamp 1º Fase, EsPCEx",
+                    "Nível 4: Fuvest 2º Fase; Unicamp 2º Fase; e, OBB 3º Fase"
+                ]
+            },
+            lin: {
+                title: "Português e Inglês",
+                levels: [
+                    "Nível 1: Vest. Civil; EAM; e, CFN",
+                    "Nível 2: EsPCEx; CN; EPCAr; ESA; ITA; e, IME, EEAR(CFS)",
+                    "Nível 3: EEAr(BCT); AFA e Concurso Público",
+                    "Nível 4: EFOMM e EN"
+                ]
+            },
+            essay: {
+                title: "Redação",
+                levels: [
+                    "Nível 1: ESA, UEMA, UEA, VESTIBULARES REGIONAIS, FACULDADES PRIVADAS",
+                    "Nível 2: CN; EPCAr; UERJ / UnB / UFPR, EsFCEx, ESPCEX",
+                    "Nível 3: AFA, EFOMM, UNESP, ENEM",
+                    "Nível 4: ITA, IME, FUVEST, UNICAMP, EN"
+                ]
+            }
+        };
+
+        function showHelp(type) {
+            const data = helpData[type];
+            document.getElementById('modalTitle').innerText = data.title;
+            document.getElementById('modalBody').innerHTML = data.levels.map(l => {
+                const parts = l.split(':');
+                return `<div><strong class="text-primary">${parts[0]}:</strong>${parts[1]}</div>`;
+            }).join('');
+            document.getElementById('helpModal').style.display = 'block';
+        }
+
+        function closeHelp() {
+            document.getElementById('helpModal').style.display = 'none';
+        }
+
+        function calc() {
+            let total = 0;
+            const getValue = (id) => parseFloat(document.getElementById(id).value) || 0;
+            const isChecked = (id) => document.getElementById(id).checked;
+            
+            const hours = getValue('hours');
+            const streamHours = getValue('streamHours');
+            const camHours = getValue('camHours');
+            
+            const minutes = hours * 60;
+            const streamMinutes = streamHours * 60;
+            const camMinutes = camHours * 60;
+            
+            // Automatic Multiplier Logic
+            let multiplier = 1;
+            if (streamHours > 0 && camHours > 0) {
+                multiplier = 1.6;
+            } else if (camHours > 0) {
+                multiplier = 1.3;
+            } else if (streamHours > 0) {
+                multiplier = 1.3;
+            }
+
+            const totalCallMinutes = streamMinutes + camMinutes;
+            const normalMinutes = hours * 60; // Now 'hours' is 'normal hours'
+            const totalMinutes = normalMinutes + totalCallMinutes;
+            const totalHours = totalMinutes / 60;
+
+            document.getElementById('total-hours-sum').innerText = totalHours.toFixed(1) + "h" + (multiplier > 1 ? ` (${multiplier}x)` : "");
+            
+            total += (normalMinutes * 3.6);
+            total += (totalCallMinutes * 3.6 * multiplier);
+
+            // Progressive Bonuses for Total Hours
+            if (totalHours >= 12) total += 300;
+            else if (totalHours >= 8) total += 200;
+            else if (totalHours >= 5) total += 100;
+            else if (totalHours >= 3) total += 50;
+
+            const madrugada = getValue('madrugada');
+            // Horas de ouro (00h-06h) - mantendo a lógica de bônus por blocos
+            if (madrugada >= 5) total += 40;
+            else if (madrugada >= 4) total += 30;
+            else if (madrugada >= 3) total += 20;
+            else if (madrugada >= 2) total += 10;
+
+            // Pages
+            total += Math.floor(getValue('pages') / 20) * 8;
+
+            // Essays
+            total += getValue('essay1') * 30;
+            total += getValue('essay2') * 40;
+            total += getValue('essay3') * 50;
+            total += getValue('essay4') * 60;
+
+            // Questions
+            total += getValue('q1') * 1;
+            total += getValue('q2') * 3;
+            total += getValue('q3') * 6;
+            total += getValue('q4') * 10;
+
+            // Events & Missions
+            total += parseInt(document.getElementById('kahootPos').value) || 0;
+            total += getValue('missionPoints');
+            if (isChecked('coletiva')) total += getValue('coletivaPoints');
+
+            // Bonuses
+            if (isChecked('list1')) total += 30;
+            if (isChecked('list2')) total += 50;
+            if (isChecked('list3')) total += 70;
+            if (isChecked('list4')) total += 100;
+            if (isChecked('noSchool')) total += 50;
+
+            // Simulado
+            if (isChecked('simulado')) {
+                total += 200;
+                const acc = document.getElementById('simuladoAcc').value;
+                if (acc === '70') total += 180;
+                if (acc === '90') total += 250;
+            }
+
+            document.getElementById('total-points').innerText = Math.floor(total) + " PTS";
+            generateReport(total);
+        }
+
+        function generateReport(total) {
+            const getV = (id) => document.getElementById(id).value || 0;
+            const isChecked = (id) => document.getElementById(id).checked;
+            
+            const normalH = getV('hours');
+            const streamH = getV('streamHours');
+            const camH = getV('camHours');
+            const totalH = (parseFloat(normalH) + parseFloat(streamH) + parseFloat(camH)).toFixed(1);
+
+            let report = `Horas Normais: ${normalH}\n`;
+            
+            if (streamH > 0 || camH > 0) {
+                let bonus = "1.0x";
+                if (streamH > 0 && camH > 0) bonus = "1.6x";
+                else bonus = "1.3x";
+                
+                let callDesc = [];
+                if (streamH > 0) callDesc.push(`${streamH}h Stream`);
+                if (camH > 0) callDesc.push(`${camH}h Cam`);
+                
+                report += `Horas em Call: ${callDesc.join(" + ")} (Bônus: ${bonus})\n`;
+            }
+            
+            report += `TOTAL DE HORAS: ${totalH}h\n`;
+            report += `Horas de Ouro (Madrugada/FDS): ${getV('madrugada')}\n`;
+            report += `Questões feitas: ${getV('q1')} n1; ${getV('q2')} n2; ${getV('q3')} n3; ${getV('q4')} n4\n`;
+            report += `Páginas lidas: ${getV('pages')}\n`;
+            
+            // Redações
+            const e1 = getV('essay1'), e2 = getV('essay2'), e3 = getV('essay3'), e4 = getV('essay4');
+            if (e1 > 0 || e2 > 0 || e3 > 0 || e4 > 0) {
+                report += `Redações: ${e1 > 0 ? e1 + ' N1; ' : ''}${e2 > 0 ? e2 + ' N2; ' : ''}${e3 > 0 ? e3 + ' N3; ' : ''}${e4 > 0 ? e4 + ' N4' : ''}\n`;
+            }
+
+            // Bônus de Listas
+            let listBonus = [];
+            if (isChecked('list1')) listBonus.push("Lista 1");
+            if (isChecked('list2')) listBonus.push("Lista 2");
+            if (isChecked('list3')) listBonus.push("Lista 3");
+            if (isChecked('list4')) listBonus.push("Lista 4");
+            if (listBonus.length > 0) report += `Listas Concluídas: ${listBonus.join(", ")}\n`;
+
+            if (isChecked('noSchool')) report += `Bônus Sem Aula/Feriado: Ativado (+50 pts)\n`;
+
+            // Simulado
+            if (isChecked('simulado')) {
+                const accText = document.getElementById('simuladoAcc').options[document.getElementById('simuladoAcc').selectedIndex].text;
+                report += `Simulado: Concluído (${accText})\n`;
+            }
+
+            if (getV('kahootPos') > 0) report += `Kahoot: ${document.getElementById('kahootPos').options[document.getElementById('kahootPos').selectedIndex].text}\n`;
+            if (getV('missionPoints') > 0) report += `Missões: ${getV('missionPoints')} pts\n`;
+            if (isChecked('coletiva')) report += `Lista Coletiva: ${getV('coletivaPoints')} pts\n`;
+            
+            report += `\nTOTAL: ${Math.floor(total)} PONTOS`;
+            document.getElementById('report').innerText = report;
+        }
+
+        function copyReport() {
+            const text = document.getElementById('report').innerText;
+            navigator.clipboard.writeText(text);
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "COPIADO!";
+            setTimeout(() => btn.innerText = originalText, 2000);
+        }
+
+        calc();
+    </script>
+</body>
+</html>
